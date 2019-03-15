@@ -15,3 +15,7 @@ Upgraded! First Person Shooter at Command Prompt (C++)
 https://www.youtube.com/watch?v=HEb2akswCcw
 
 (Basically stole his code and translated it to javascript)
+
+Gameloop by
+
+https://coderwall.com/p/iygcpa/gameloop-the-correct-way
