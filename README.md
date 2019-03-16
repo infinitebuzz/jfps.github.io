@@ -1,11 +1,11 @@
 # jfps - The Javascript First Person Shooter
+Try it out here:
+(https://infinitebuzz.github.io/jfps.github.io/)
 
 This is a just for fun project inspired by OneLoneCoder (javid9x)
-
-https://www.youtube.com/channel/UC-yuWVUplUJZvieEligKBkA
+(https://www.youtube.com/channel/UC-yuWVUplUJZvieEligKBkA)
 
 Specifically these two videos
-
 Code-It-Yourself! First Person Shooter (Quick and Simple C++)
 
 https://www.youtube.com/watch?v=xW8skO7MFYw
