@@ -12,9 +12,9 @@
 </head>
 
 <body>
-  <canvas id="canvas" width="400" height="200"></canvas>
-  <div id="stats">Initializing</div>
-  <p id="map" style="font-family: "Lucida Console", Monaco, monospace"></p>
+  <canvas id="canvas" width="700" height="300"></canvas><br />
+  <span id="instruct">Keys:  aswd zx m 12  </span><span id="stats">Initializing</span>
+  <p id="map" style="font-family: 'Lucida Console', Monaco, monospace; font-size: 7px;"></p>
   <script type="text/javascript">
   /* Original source
   https://github.com/OneLoneCoder/videos/blob/master/OneLoneCoder_CommandLineFPS.cpp
@@ -23,7 +23,7 @@
 	var canvas = document.getElementById("canvas");
 	var divStats = document.getElementById("stats");
 	var divMap = document.getElementById("map");
-	
+	var fShowMap = false;
 	var fPlayerA = 0.0;			// Player Start Rotation
 	var fFOV = 3.14159 / 4.0;	// Field of View
 	var fDepth = 16.0;			// Maximum rendering distance
@@ -84,7 +84,8 @@
 		currentTime = (new Date()).getTime();
 		delta = (currentTime-lastTime);
 
-		if(delta > fElapsedTime) {
+		//if(delta > fElapsedTime) 
+		{
 			cx.clearRect(0,0,cw,cw);
 			// draw
 
@@ -167,63 +168,100 @@
 
 				// Shader walls based on distance
 				var nShade = '#FFFFFF';
+				var nLight = 0
 				if (fDistanceToWall > fDepth) {
-					nShade = 0;	// Out of range
+					nShade = '#000000';	// Out of range
 				}
 				else 
 				{
-					nShade = (1.0 - (fDistanceToWall / fDepth)) * 255;
+					nLight = (1.0 - (fDistanceToWall / fDepth)) * 172;
 				}
-
+				switch(map.charAt(nTestY * nMapWidth + nTestX)) {
+				default:
+				case '#':
+					nShade = "rgb("+nLight+","+nLight+","+nLight+")"
+					break;
+				case ':':
+					nShade = "rgb("+(nLight*0.1)+","+(nLight*0.9)+","+(nLight*0.2)+")"
+					break;
+				case ';':
+					nShade = "rgb("+(nLight*0.6)+","+(nLight*0.3)+","+(nLight*0.6)+")"
+					break;
+				case ',':
+					nShade = "rgb("+(nLight*0.2)+","+(nLight*0.4)+","+(nLight*0.4)+")"
+					break;
+				case '+':
+					nShade = "rgb("+(nLight*0.4)+","+(nLight*0.2)+","+(nLight*0.2)+")"
+					break;
+				case '.':
+					nShade = "rgb("+(nLight*0.6)+","+(nLight*0.4)+","+(nLight*0.6)+")"
+					break;
+				case '`':
+					nShade = "rgb("+(nLight*0.7)+","+(nLight*0.7)+","+(nLight*0.7)+")"
+					break;
+				case '`':
+					nShade = "rgb("+(nLight*0.0)+","+(nLight*0.9)+","+(nLight*0.9)+")"
+					break;
+				case '\\':
+					nShade = "rgb("+(nLight*0.1)+","+(nLight*0.7)+","+(nLight*0.9)+")"
+					break;
+				case '@':
+					nShade = "rgb("+(nLight*0.5)+","+(nLight*0.6)+","+(nLight*0.7)+")"
+					break;
+				}
 				if (bBoundary)		nShade = '#000000'; // Black it out
 				
+				var drawX = nScreenWidth - x;
 				for (var y = 0; y < nScreenHeight; y++)
 				{
 					// Each Row
 					if(y <= nCeiling) {
-						cx.fillStyle = '#000000';
-					} else if(y > nCeiling && y <= nFloor) {
-						cx.fillStyle = "rgb("+nShade+","+nShade+","+nShade+")";
+						//var nCeilColor = (nCeiling - y) * 2;
+						//cx.fillStyle = "rgb("+nCeilColor+","+nCeilColor+","+nCeilColor+")";
+						cx.fillStyle = '#101010';
+					} else if(y > nFloor) {
+// Shade floor based on distance
+						var b = ((y -nScreenHeight/2.0) / (nScreenHeight / 2.0));
+						var nFloorColor = (b * 0.5) * 255;
+						cx.fillStyle = "rgb("+nFloorColor*0.1+","+nFloorColor+","+nFloorColor*0.2+")";
 					}
-					else // Floor
+					else
 					{				
-						// Shade floor based on distance
-						var b = 1.0 - ((y -nScreenHeight/2.0) / (nScreenHeight / 2.0));
-						nShade = 0.5 + (b * 0.5) * 255;
-						cx.fillStyle = "rgb("+nShade+","+nShade+","+nShade+")";
+						cx.fillStyle = nShade;
 					}
 					//cx.fillRect(x, y, blockSizeX, blockSizeY);
-					cx.fillRect(x * blockSizeX, y * blockSizeY, blockSizeX, blockSizeY);
+					cx.fillRect(drawX * blockSizeX, y * blockSizeY, blockSizeX, blockSizeY);
 				}
 			}
 
 			// Display Stats
 			//swprintf_s(screen, 40, L"X=%3.2f, Y=%3.2f, A=%3.2f FPS=%3.2f ", fPlayerX, fPlayerY, fPlayerA, 1.0f/fElapsedTime);
-			divStats.innerHTML = "X=" + Math.round(fPlayerX * 100) / 100 + ", Y=" + Math.round(fPlayerY * 100) / 100 + ", A=" + Math.round(fPlayerA * 100) / 100;
+			divStats.innerHTML = "X=" + Math.round(fPlayerX * 100) / 100 + ", Y=" + Math.round(fPlayerY * 100) / 100 + ", A=" + Math.round(fPlayerA * 100) / 100 + "fps=" + Math.round((1000/delta)*100)/100;
 			
-			// Display Map
-			screen = "";
-			nPlayerX = Math.floor(fPlayerX);
-			nPlayerY = Math.floor(fPlayerY);
-			for (var ny = 0; ny < nMapHeight; ny++)
-			{
-				for (var nx = 0; nx < nMapWidth; nx++) 
+			if(fShowMap) {
+				// Display Map
+				screen = "";
+				nPlayerX = Math.floor(fPlayerX);
+				nPlayerY = Math.floor(fPlayerY);
+				for (var ny = 0; ny < nMapHeight; ny++)
 				{
-					if(nx == nPlayerX && ny == nPlayerY) {
-						screen += 'P';
-					} else if(map[ny * nMapWidth + nx] != ' ') {
-						screen += '#';//map[ny * nMapWidth + nx];
-					} else {
-						screen += '_';
+					for (var nx = 0; nx < nMapWidth; nx++) 
+					{
+						if(nx == nPlayerX && ny == nPlayerY) {
+							screen += 'P';
+						} else if(map[ny * nMapWidth + nx] != ' ') {
+							screen += '#';//map[ny * nMapWidth + nx];
+						} else {
+							screen += '_';
+						}
 					}
+					screen += "<br />";
 				}
-				screen += "<br />";
-			}
 
-			// Display Frame
-			//screen[nScreenWidth * nScreenHeight - 1] = '\0';
-			divMap.innerHTML = screen;
-		
+				// Display Frame
+				//screen[nScreenWidth * nScreenHeight - 1] = '\0';
+				divMap.innerHTML = screen;
+			}		
 			lastTime = currentTime - (delta % fElapsedTime);
 		}
 	}
@@ -281,6 +319,29 @@
 				fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
 			}
 			break;
+			// show hid map
+		case 109:
+			fShowMap = !fShowMap;
+			if(!fShowMap) {
+				divMap.innerHTML = "";
+			}
+			break;
+			// change maps
+		case 49:	//1
+			map = map0;
+			nMapWidth = map0Width;				// World Dimensions
+			nMapHeight = map0Height;
+			fPlayerX = map0PlayerX;			// Player Start Position
+			fPlayerY = map0PlayerY;
+			break;
+		case 50:	//2
+			map = map1;
+			nMapWidth = map1Width;				// World Dimensions
+			nMapHeight = map1Height;
+			fPlayerX = map1PlayerX;			// Player Start Position
+			fPlayerY = map1PlayerY;
+			break;
+
 		}
 	})
 	
