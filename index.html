@@ -271,10 +271,16 @@
 		case 97://'a':
 			// left
 			fPlayerA += (fSpeed * 5);// * fElapsedTime;
+			if(fPlayerA > 6.28319) {
+				fPlayerA -= 6.28319;
+			}
 			break;
 		case 100://'d':
 			// right
 			fPlayerA -= (fSpeed * 5);// * fElapsedTime;
+			if(fPlayerA < 0) {
+				fPlayerA += 6.28319;
+			}
 			break;
 		case 119://'w':
 			// up
