@@ -19,3 +19,5 @@ https://www.youtube.com/watch?v=HEb2akswCcw
 Gameloop by
 
 https://coderwall.com/p/iygcpa/gameloop-the-correct-way
+
+This is similar to the rendering system used in castle wolfenstein, and the levels here are borrowed from the same.  I hopo to texture it, if I can find the time.
