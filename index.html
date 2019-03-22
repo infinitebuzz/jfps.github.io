@@ -275,7 +275,6 @@
 			    }
 			}
 			if(fKeyRight) {
-			    fKeyRight = false;
 			    fPlayerA -= (fSpeed * 5);// * fElapsedTime;
 			    if(fPlayerA < 0) {
 			        fPlayerA += 6.28319;
@@ -337,7 +336,7 @@
 	            break;
 	        case 83://'s':
 	            // down
-	            fKeyDown = false;
+	            fKeyDown = true;
 	            break;
 	        case 32:
 	            // Space - fire
@@ -348,7 +347,7 @@
 	            break;
 	        case 88:
 	            // x - strafe right
-	            fKeyStrafeRight = false;
+	            fKeyStrafeRight = true;
 	            break;
 	    }
 	});
