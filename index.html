@@ -23,6 +23,30 @@
 	var canvas = document.getElementById("canvas");
 	var divStats = document.getElementById("stats");
 	var divMap = document.getElementById("map");
+	var texMedia0 = loadTexture("textures/MEDIA0.png");
+	var texPISFA0 = loadTexture("textures/PISFA0.png");
+	var texPISGB0 = loadTexture("textures/PISGB0.png");
+	var texSSWVA1 = loadTexture("textures/SSWVA1.png");
+	var texSSWVB1 = loadTexture("textures/SSWVB1.png");
+	var texSSWVC1 = loadTexture("textures/SSWVC1.png");
+	var texSSWVD1 = loadTexture("textures/SSWVD1.png");
+	var texSSWVE0 = loadTexture("textures/SSWVE0.png");
+	var texSSWVF0 = loadTexture("textures/SSWVF0.png");
+	var texSSWVG0 = loadTexture("textures/SSWVG0.png");
+	var texSSWVH0 = loadTexture("textures/SSWVH0.png");
+	var texSSWVI0 = loadTexture("textures/SSWVI0.png");
+	var texSSWVJ1 = loadTexture("textures/SSWVJ0.png");
+	var texSSWVK0 = loadTexture("textures/SSWVK0.png");
+	var texSSWVL0 = loadTexture("textures/SSWVL0.png");
+	var texSSWVM0 = loadTexture("textures/SSWVM0.png", 512, 512);
+	//var texWolfCollection = loadTexture("textures/WolfCollection.png", 512, 512);
+	var img = new Image();
+	img.src = "textures/SSWVM0.png";
+	var canvas = document.createElement('canvas');
+	canvas.width = 512;
+	canvas.height = 512;
+	var texWolfCollection = canvas.getContext('2d');
+	texWolfCollection.drawImage(img, 0, 0, 512, 512);
 	var fShowMap = false;
 	var fPlayerA = 0.0;			// Player Start Rotation
 	var fFOV = 3.14159 / 4.0;	// Field of View
@@ -132,38 +156,26 @@
 							// Ray has hit wall
 							bHitWall = true;
 
-							// To highlight tile boundaries, cast a ray from each corner
-							// of the tile, to the player. The more coincident this ray
-							// is to the rendering ray, the closer we are to a tile 
-							// boundary, which we'll shade to add detail to the walls
-							var p = [];
-
-							// Test each corner of hit tile, storing the distance from
-							// the player, and the calculated dot product of the two rays
-							var totalVectors = 0;
-							for (var tx = 0; tx < 2; tx++)
-								for (var ty = 0; ty < 2; ty++)
-								{
-									// Angle of corner to eye
-									var vy = nTestY + ty - fPlayerY;
-									var vx = nTestX + tx - fPlayerX;
-									var d = Math.sqrt(vx*vx + vy*vy); 
-									var dot = (fEyeX * vx / d) + (fEyeY * vy / d);
-									p[totalVectors] = [d, dot];
-									totalVectors++;
-								}
-
-							// Sort Pairs from closest to farthest
-							p.sort(function(a, b) {
-								return a[0] - b[0];
-							});
-			//				sort(p.begin(), p.end(), [](const pair<float, float> &left, const pair<float, float> &right) {return left.first < right.first; });
+							var fBlockMidX = nTestX + 0.5;
+							var fBlockMidY = nTestY + 0.5;
+							var fTestPointX = fPlayerX + fEyeX + fDistanceToWall;
+							var fTestPointY = fPlayerY + fEyeY + fDistanceToWall;
 							
-							// First two/three are closest (we will never see all four)
-							var fBound = 0.01;
-							if (Math.acos(p[0][1]) < fBound) bBoundary = true;
-							if (Math.acos(p[1][1]) < fBound) bBoundary = true;
-							if (Math.acos(p[2][1]) < fBound) bBoundary = true;
+							var fTestAngle = Math.atan2((fTestPointY - fBlockMidY), (fTestPointX - fBlockMidX));
+							var fSampleX = 0.0;
+							if(fTestAngle >= -3.14159 * 0.25 && fTestAngle < 3.14159 * 0.25) {
+								fSampleX = fTestPointY - nTestY;
+							}
+							if(fTestAngle >= 3.14159 * 0.25 && fTestAngle < 3.14159 * 0.75) {
+								fSampleX = fTestPointX - nTestX;
+							}
+							if(fTestAngle < -3.14159 * 0.25 && fTestAngle >= -3.14159 * 0.75) {
+								fSampleX = fTestPointX - nTestX;
+							}
+							if(fTestAngle >= 3.14159 * 0.75 && fTestAngle < -3.14159 * 0.75) {
+								fSampleX = fTestPointY - nTestY;
+							}
+							fSampleX = fSampleX - Math.trunc(fSampleX);
 						}
 					}
 				}
@@ -173,7 +185,7 @@
 				var nFloor = nScreenHeight - nCeiling;
 
 				// Shader walls based on distance
-				var nShade = '#FFFFFF';
+				var nTexture = 0;
 				var nLight = 0
 				if (fDistanceToWall > fDepth) {
 					nShade = '#000000';	// Out of range
@@ -185,36 +197,53 @@
 				switch(map.charAt(nTestY * nMapWidth + nTestX)) {
 				default:
 				case '#':
-					nShade = "rgb("+nLight+","+nLight+","+nLight+")"
+					nTextureX = 0;//0;
+					nTextureY = 0;
 					break;
 				case ':':
-					nShade = "rgb("+(nLight*0.1)+","+(nLight*0.9)+","+(nLight*0.2)+")"
+					nTextureX = 128;//1;
+					nTextureY = 0;
 					break;
 				case ';':
-					nShade = "rgb("+(nLight*0.6)+","+(nLight*0.3)+","+(nLight*0.6)+")"
+					nTextureX = 256;//2;
+					nTextureY = 0;
 					break;
 				case ',':
-					nShade = "rgb("+(nLight*0.2)+","+(nLight*0.4)+","+(nLight*0.4)+")"
+					nTextureX = 768;
+					nTextureY = 0;
 					break;
 				case '+':
-					nShade = "rgb("+(nLight*0.4)+","+(nLight*0.2)+","+(nLight*0.2)+")"
+					nTextureX = 0;
+					nTextureY = 128;
 					break;
 				case '.':
-					nShade = "rgb("+(nLight*0.6)+","+(nLight*0.4)+","+(nLight*0.6)+")"
+					nTextureX = 128;
+					nTextureY = 128;
 					break;
 				case '`':
-					nShade = "rgb("+(nLight*0.7)+","+(nLight*0.7)+","+(nLight*0.7)+")"
+					nTextureX = 768;
+					nTextureY = 128;
 					break;
 				case '`':
-					nShade = "rgb("+(nLight*0.0)+","+(nLight*0.9)+","+(nLight*0.9)+")"
+					nTextureX = 256;
+					nTextureY = 256;
 					break;
 				case '\\':
-					nShade = "rgb("+(nLight*0.1)+","+(nLight*0.7)+","+(nLight*0.9)+")"
+					nTextureX = 768;
+					nTextureY = 256;
 					break;
 				case '@':
-					nShade = "rgb("+(nLight*0.5)+","+(nLight*0.6)+","+(nLight*0.7)+")"
+					nTextureX = 0;
+					nTextureY = 384;
+					break;
+				case '[':	// not found
+					nTextureX = 256;
+					nTextureY = 384;
 					break;
 				}
+					nTextureX = 0;//0;
+					nTextureY = 0;
+				var nPitch = 512;
 				if (bBoundary)		nShade = '#000000'; // Black it out
 				
 				var drawX = nScreenWidth - x;
@@ -232,14 +261,15 @@
 						cx.fillStyle = "rgb("+nFloorColor*0.1+","+nFloorColor+","+nFloorColor*0.2+")";
 					}
 					else
-					{				
-						cx.fillStyle = nShade;
+					{	
+						var	fSampleY = (y - nCeiling) / (nFloor - nCeiling);
+						cx.fillStyle = getTexturePixel(Math.floor(nTextureX + (fSampleX * 128.0)), Math.floor(nTextureY + (fSampleY * 128.0)), texWolfCollection);
 					}
 					//cx.fillRect(x, y, blockSizeX, blockSizeY);
 					cx.fillRect(drawX * blockSizeX, y * blockSizeY, blockSizeX, blockSizeY);
 				}
 			}
-
+				//cx.drawImage(texWolfCollection, 0, 0);
 			// Display Stats
 			//swprintf_s(screen, 40, L"X=%3.2f, Y=%3.2f, A=%3.2f FPS=%3.2f ", fPlayerX, fPlayerY, fPlayerA, 1.0f/fElapsedTime);
 			divStats.innerHTML = "X=" + Math.round(fPlayerX * 100) / 100 + ", Y=" + Math.round(fPlayerY * 100) / 100 + ", A=" + Math.round((fPlayerA * 57.2958) * 100) / 100 + " fps=" + Math.round((1000/delta)*100)/100;
