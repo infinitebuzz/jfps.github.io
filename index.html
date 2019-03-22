@@ -76,7 +76,13 @@
 	var nScreenHeight = 100;			// Console Screen Size Y (rows)
 	var blockSizeX = cw / nScreenWidth;
 	var blockSizeY = ch / nScreenHeight;
-
+      // Keys
+	var fKeyLeft = false;
+	var fKeyRight = false;
+	var fKeyUp = false;
+	var fKeyDown = false;
+	var fKeyStrafeLeft = false;
+	var fKeyStrafeRight = false;
 
 	function gameLoop() {
 		window.requestAnimationFrame(gameLoop);
@@ -262,94 +268,145 @@
 				//screen[nScreenWidth * nScreenHeight - 1] = '\0';
 				divMap.innerHTML = screen;
 			}		
+			if(fKeyLeft) {
+			    fPlayerA += (fSpeed * 5);// * fElapsedTime;
+			    if(fPlayerA > 6.28319) {
+			        fPlayerA -= 6.28319;
+			    }
+			}
+			if(fKeyRight) {
+			    fKeyRight = false;
+			    fPlayerA -= (fSpeed * 5);// * fElapsedTime;
+			    if(fPlayerA < 0) {
+			        fPlayerA += 6.28319;
+			    }
+			}
+			if(fKeyUp) {
+			    fPlayerX += Math.sin(fPlayerA) * fSpeed * fElapsedTime;
+			    fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;
+			    if(map.charAt(Math.floor(fPlayerY) * nMapWidth + Math.floor(fPlayerX)) != ' ')
+			    {
+			        fPlayerX -= Math.sin(fPlayerA) * fSpeed * fElapsedTime;
+			        fPlayerY -= Math.cos(fPlayerA) * fSpeed * fElapsedTime;
+			    }
+			}
+			if(fKeyDown) {
+			    fPlayerX -= Math.sin(fPlayerA) * fSpeed * fElapsedTime;
+			    fPlayerY -= Math.cos(fPlayerA) * fSpeed * fElapsedTime;
+			    if(map.charAt(Math.floor(fPlayerY) * nMapWidth + Math.floor(fPlayerX)) != ' ')
+			    {
+			        fPlayerX += Math.sin(fPlayerA) * fSpeed * fElapsedTime;
+			        fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;
+			    }
+			}
+			if(fKeyStrafeLeft) {
+			    fPlayerX -= Math.sin(fPlayerA) * fSpeed * fElapsedTime;;
+			    fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
+			    if(map.charAt(Math.floor(fPlayerY) * nMapWidth + Math.floor(fPlayerX)) != ' ')
+			    {
+			        fPlayerX += Math.sin(fPlayerA) * fSpeed * fElapsedTime;;
+			        fPlayerY -= Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
+			    }
+			}
+			if(fKeyStrafeRight) {
+			    fPlayerX += Math.sin(fPlayerA) * fSpeed * fElapsedTime;;
+			    fPlayerY -= Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
+			    if(map.charAt(Math.floor(fPlayerY) * nMapWidth + Math.floor(fPlayerX)) != ' ')
+			    {
+			        fPlayerX -= Math.sin(fPlayerA) * fSpeed * fElapsedTime;;
+			        fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
+			    }
+			}
 			lastTime = currentTime - (delta % fElapsedTime);
 		}
 	}
 
-	document.addEventListener("keypress", function(event) {
-		switch(event.keyCode) {
-		case 97://'a':
-			// left
-			fPlayerA += (fSpeed * 5);// * fElapsedTime;
-			if(fPlayerA > 6.28319) {
-				fPlayerA -= 6.28319;
-			}
-			break;
-		case 100://'d':
-			// right
-			fPlayerA -= (fSpeed * 5);// * fElapsedTime;
-			if(fPlayerA < 0) {
-				fPlayerA += 6.28319;
-			}
-			break;
-		case 119://'w':
-			// up
-			fPlayerX += Math.sin(fPlayerA) * fSpeed * fElapsedTime;
-			fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;
-			if(map.charAt(Math.floor(fPlayerY) * nMapWidth + Math.floor(fPlayerX)) != ' ')
-			{
-				fPlayerX -= Math.sin(fPlayerA) * fSpeed * fElapsedTime;
-				fPlayerY -= Math.cos(fPlayerA) * fSpeed * fElapsedTime;
-			}
-			break;
-		case 115://'s':
-			// down
-			fPlayerX -= Math.sin(fPlayerA) * fSpeed * fElapsedTime;
-			fPlayerY -= Math.cos(fPlayerA) * fSpeed * fElapsedTime;
-			if(map.charAt(Math.floor(fPlayerY) * nMapWidth + Math.floor(fPlayerX)) != ' ')
-			{
-				fPlayerX += Math.sin(fPlayerA) * fSpeed * fElapsedTime;
-				fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;
-			}
-			break;
-		case 32:
-			// Space - fire
-			break;
-		case 122:
-			// Z - strafe left
-			fPlayerX -= Math.sin(fPlayerA) * fSpeed * fElapsedTime;;
-			fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
-			if(map.charAt(Math.floor(fPlayerY) * nMapWidth + Math.floor(fPlayerX)) != ' ')
-			{
-				fPlayerX += Math.sin(fPlayerA) * fSpeed * fElapsedTime;;
-				fPlayerY -= Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
-			}
-			break;
-		case 120:
-			// x - strafe right
-			fPlayerX += Math.sin(fPlayerA) * fSpeed * fElapsedTime;;
-			fPlayerY -= Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
-			if(map.charAt(Math.floor(fPlayerY) * nMapWidth + Math.floor(fPlayerX)) != ' ')
-			{
-				fPlayerX -= Math.sin(fPlayerA) * fSpeed * fElapsedTime;;
-				fPlayerY += Math.cos(fPlayerA) * fSpeed * fElapsedTime;;
-			}
-			break;
-			// show hid map
-		case 109:
-			fShowMap = !fShowMap;
-			if(!fShowMap) {
-				divMap.innerHTML = "";
-			}
-			break;
-			// change maps
-		case 49:	//1
-			map = map0;
-			nMapWidth = map0Width;				// World Dimensions
-			nMapHeight = map0Height;
-			fPlayerX = map0PlayerX;			// Player Start Position
-			fPlayerY = map0PlayerY;
-			break;
-		case 50:	//2
-			map = map1;
-			nMapWidth = map1Width;				// World Dimensions
-			nMapHeight = map1Height;
-			fPlayerX = map1PlayerX;			// Player Start Position
-			fPlayerY = map1PlayerY;
-			break;
+	window.addEventListener("keydown", function (event) {
+	    switch (event.keyCode) {
+	        case 65://'a':
+	            // left
+	            fKeyLeft = true;
+	            break;
+	        case 68://'d':
+	            // right
+	            fKeyRight = true;
+	            break;
+	        case 87://'w':
+	            // up
+	            fKeyUp = true;
+	            break;
+	        case 83://'s':
+	            // down
+	            fKeyDown = false;
+	            break;
+	        case 32:
+	            // Space - fire
+	            break;
+	        case 90:
+	            // Z - strafe left
+	            fKeyStrafeLeft = true;
+	            break;
+	        case 88:
+	            // x - strafe right
+	            fKeyStrafeRight = false;
+	            break;
+	    }
+	});
 
-		}
-	})
+	window.addEventListener("keyup", function (event) {
+	    switch (event.keyCode) {
+	        case 65:
+	            // left
+	            fKeyLeft = false;
+	            break;
+	        case 68:
+	            // right
+	            fKeyRight = false;
+	            break;
+	        case 87:
+	            // up
+	            fKeyUp = false;
+	            break;
+	        case 83:
+	            // down
+	            fKeyDown = false;
+	            break;
+	        case 32:
+	            // Space - fire
+	            break;
+	        case 90:
+	            // Z - strafe left
+	            fKeyStrafeLeft = false;
+	            break;
+	        case 88:
+	            // x - strafe right
+	            fKeyStrafeRight = false;
+	            break;
+	            // show hid map
+	        case 77:
+	            fShowMap = !fShowMap;
+	            if (!fShowMap) {
+	                divMap.innerHTML = "";
+	            }
+	            break;
+	            // change maps
+	        case 49:	//1
+	            map = map0;
+	            nMapWidth = map0Width;				// World Dimensions
+	            nMapHeight = map0Height;
+	            fPlayerX = map0PlayerX;			// Player Start Position
+	            fPlayerY = map0PlayerY;
+	            break;
+	        case 50:	//2
+	            map = map1;
+	            nMapWidth = map1Width;				// World Dimensions
+	            nMapHeight = map1Height;
+	            fPlayerX = map1PlayerX;			// Player Start Position
+	            fPlayerY = map1PlayerY;
+	            break;
+
+	    }
+	});
 	
 	if (typeof (canvas.getContext) !== undefined) {
 		cx = canvas.getContext('2d');
