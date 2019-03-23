@@ -38,15 +38,8 @@
 	var texSSWVJ1 = loadTexture("textures/SSWVJ0.png");
 	var texSSWVK0 = loadTexture("textures/SSWVK0.png");
 	var texSSWVL0 = loadTexture("textures/SSWVL0.png");
-	var texSSWVM0 = loadTexture("textures/SSWVM0.png", 512, 512);
-	//var texWolfCollection = loadTexture("textures/WolfCollection.png", 512, 512);
-	var img = new Image();
-	img.src = "textures/SSWVM0.png";
-	var canvas = document.createElement('canvas');
-	canvas.width = 512;
-	canvas.height = 512;
-	var texWolfCollection = canvas.getContext('2d');
-	texWolfCollection.drawImage(img, 0, 0, 512, 512);
+	var texSSWVM0 = loadTexture("textures/SSWVM0.png");
+	var texWolfCollection = loadTexture("textures/WolfCollection.png", 512, 512);
 	var fShowMap = false;
 	var fPlayerA = 0.0;			// Player Start Rotation
 	var fFOV = 3.14159 / 4.0;	// Field of View
