@@ -12,7 +12,7 @@
 </head>
 
 <body>
-  <canvas id="canvas" width="700" height="300"></canvas><br />
+  <canvas id="canvas" width="1024" height="512"></canvas><br />
   <span id="instruct">Keys:  aswd zx m 12  </span><span id="stats">Initializing</span>
   <p id="map" style="font-family: 'Lucida Console', Monaco, monospace; font-size: 7px;"></p>
   <script type="text/javascript">
@@ -23,24 +23,7 @@
 	var canvas = document.getElementById("canvas");
 	var divStats = document.getElementById("stats");
 	var divMap = document.getElementById("map");
-	var texMedia0 = loadTexture("textures/MEDIA0.png");
-	var texPISFA0 = loadTexture("textures/PISFA0.png");
-	var texPISGB0 = loadTexture("textures/PISGB0.png");
-	var texSSWVA1 = loadTexture("textures/SSWVA1.png");
-	var texSSWVB1 = loadTexture("textures/SSWVB1.png");
-	var texSSWVC1 = loadTexture("textures/SSWVC1.png");
-	var texSSWVD1 = loadTexture("textures/SSWVD1.png");
-	var texSSWVE0 = loadTexture("textures/SSWVE0.png");
-	var texSSWVF0 = loadTexture("textures/SSWVF0.png");
-	var texSSWVG0 = loadTexture("textures/SSWVG0.png");
-	var texSSWVH0 = loadTexture("textures/SSWVH0.png");
-	var texSSWVI0 = loadTexture("textures/SSWVI0.png");
-	var texSSWVJ1 = loadTexture("textures/SSWVJ0.png");
-	var texSSWVK0 = loadTexture("textures/SSWVK0.png");
-	var texSSWVL0 = loadTexture("textures/SSWVL0.png");
-	var texSSWVM0 = loadTexture("textures/SSWVM0.png");
-	var texWolfCollection = loadTexture("textures/WolfCollection.png", 512, 512);
-	var fShowMap = false;
+	var fShowMap = true;
 	var fPlayerA = 0.0;			// Player Start Rotation
 	var fFOV = 3.14159 / 4.0;	// Field of View
 	var fDepth = 16.0;			// Maximum rendering distance
@@ -52,29 +35,7 @@
 	var nMapHeight = map0Height;
 	var fPlayerX = map0PlayerX;			// Player Start Position
 	var fPlayerY = map0PlayerY;
-/*
-	var fPlayerX = 14.7;			// Player Start Position
-	var fPlayerY = 5.09;
-	var map = "";
-	var nMapWidth = 16;				// World Dimensions
-	var nMapHeight = 16;
-	map += "#########       ";
-	map += "#               ";
-	map += "#       ########";
-	map += "#              #";
-	map += "#      ##      #";
-	map += "#      ##      #";
-	map += "#              #";
-	map += "###            #";
-	map += "##             #";
-	map += "#      ####  ###";
-	map += "#      #       #";
-	map += "#      #       #";
-	map += "#              #";
-	map += "#      #########";
-	map += "#              #";
-	map += "################";
-*/
+
 	for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
 		window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
 		window.cancelAnimationFrame =
@@ -89,10 +50,14 @@
 		lastTime     =    (new Date()).getTime(),
 		currentTime  =    0,
 		delta = 0;
-	var nScreenWidth = 100;			// Console Screen Size X (columns)
-	var nScreenHeight = 100;			// Console Screen Size Y (rows)
-	var blockSizeX = cw / nScreenWidth;
-	var blockSizeY = ch / nScreenHeight;
+	var nScreenWidth = 128; // Updated screen width to 128
+	var nScreenHeight = 128; // Updated screen height to 128
+	var blockSizeX = cw / nScreenWidth; // Adjusted block size to match new resolution
+	var blockSizeY = ch / nScreenHeight; // Adjusted block size to match new resolution
+
+	//canvas.width = 128; // Match canvas width to resolution
+	//.canvas.height = 128; // Match canvas height to resolution
+
       // Keys
 	var fKeyLeft = false;
 	var fKeyRight = false;
@@ -112,193 +77,182 @@
 			cx.clearRect(0,0,cw,cw);
 			// draw
 
-			for (var x = 0; x < nScreenWidth; x++)
-			{
-				// For each column, calculate the projected ray angle into world space
-				var fRayAngle = (fPlayerA - fFOV/2.0) + (x / nScreenWidth) * fFOV;
+			// Adjusted texture sampling logic in the raycasting loop
+			for (var x = 0; x < nScreenWidth; x++) {
+			    var flippedX = nScreenWidth - 1 - x; // Flip the x-coordinate for horizontal inversion
+			    var fRayAngle = (fPlayerA - fFOV / 2.0) + (flippedX / nScreenWidth) * fFOV;
+			    var fStepSize = 0.1;
+			    var fDistanceToWall = 0.0;
+			    var bHitWall = false;
+			    var fEyeX = Math.sin(fRayAngle);
+			    var fEyeY = Math.cos(fRayAngle);
+				var wallChar = ' ';
+			    while (!bHitWall && fDistanceToWall < fDepth) {
+			        fDistanceToWall += fStepSize;
+			        var nTestX = Math.floor(fPlayerX + fEyeX * fDistanceToWall);
+			        var nTestY = Math.floor(fPlayerY + fEyeY * fDistanceToWall);
 
-				// Find distance to wall
-				var fStepSize = 0.1;		  // Increment size for ray casting, decrease to increase										
-				var fDistanceToWall = 0.0; //                                      resolution
-
-				var bHitWall = false;		// Set when ray hits wall block
-				var bBoundary = false;		// Set when ray hits boundary between two wall blocks
-
-				var fEyeX = Math.sin(fRayAngle); // Unit vector for ray in player space
-				var fEyeY = Math.cos(fRayAngle);
-
-				// Incrementally cast ray from player, along ray angle, testing for 
-				// intersection with a block
-				while (!bHitWall && fDistanceToWall < fDepth)
-				{
-					fDistanceToWall += fStepSize;
-					var nTestX = Math.floor(fPlayerX + fEyeX * fDistanceToWall);
-					var nTestY = Math.floor(fPlayerY + fEyeY * fDistanceToWall);
-					
-					// Test if ray is out of bounds
-					if (nTestX < 0 || nTestX >= nMapWidth || nTestY < 0 || nTestY >= nMapHeight)
-					{
-						bHitWall = true;			// Just set distance to maximum depth
-						fDistanceToWall = fDepth;
-					}
-					else
-					{
-						// Ray is inbounds so test to see if the ray cell is a wall block
-						if(map.charAt(nTestY * nMapWidth + nTestX) != ' ')
-						{
-							// Ray has hit wall
+			        if (nTestX < 0 || nTestX >= nMapWidth || nTestY < 0 || nTestY >= nMapHeight) {
+			            bHitWall = true;
+			            fDistanceToWall = fDepth;
+			        } else {
+						wallChar = map.charAt(nTestY * nMapWidth + nTestX);
+						if (wallChar != ' ') {
 							bHitWall = true;
 
 							var fBlockMidX = nTestX + 0.5;
 							var fBlockMidY = nTestY + 0.5;
-							var fTestPointX = fPlayerX + fEyeX + fDistanceToWall;
-							var fTestPointY = fPlayerY + fEyeY + fDistanceToWall;
-							
-							var fTestAngle = Math.atan2((fTestPointY - fBlockMidY), (fTestPointX - fBlockMidX));
+							var fTestPointX = fPlayerX + fEyeX * fDistanceToWall;
+							var fTestPointY = fPlayerY + fEyeY * fDistanceToWall;
+
+							var fTestAngle = Math.atan2(fTestPointY - fBlockMidY, fTestPointX - fBlockMidX);
 							var fSampleX = 0.0;
-							if(fTestAngle >= -3.14159 * 0.25 && fTestAngle < 3.14159 * 0.25) {
+
+							if (fTestAngle >= -Math.PI * 0.25 && fTestAngle < Math.PI * 0.25) {
+								fSampleX = fTestPointY - nTestY;
+							} else if (fTestAngle >= Math.PI * 0.25 && fTestAngle < Math.PI * 0.75) {
+								fSampleX = fTestPointX - nTestX;
+							} else if (fTestAngle < -Math.PI * 0.25 && fTestAngle >= -Math.PI * 0.75) {
+								fSampleX = fTestPointX - nTestX;
+							} else {
 								fSampleX = fTestPointY - nTestY;
 							}
-							if(fTestAngle >= 3.14159 * 0.25 && fTestAngle < 3.14159 * 0.75) {
-								fSampleX = fTestPointX - nTestX;
-							}
-							if(fTestAngle < -3.14159 * 0.25 && fTestAngle >= -3.14159 * 0.75) {
-								fSampleX = fTestPointX - nTestX;
-							}
-							if(fTestAngle >= 3.14159 * 0.75 && fTestAngle < -3.14159 * 0.75) {
-								fSampleX = fTestPointY - nTestY;
-							}
-							fSampleX = fSampleX - Math.trunc(fSampleX);
+
+							fSampleX = Math.abs(fSampleX % 1);
 						}
 					}
-				}
-			
-				// Calculate distance to ceiling and floor
-				var nCeiling = (nScreenHeight/2.0) - nScreenHeight / (fDistanceToWall);
-				var nFloor = nScreenHeight - nCeiling;
+			    }
 
-				// Shader walls based on distance
-				var nTexture = 0;
-				var nLight = 0
-				if (fDistanceToWall > fDepth) {
-					nShade = '#000000';	// Out of range
-				}
-				else 
-				{
-					nLight = (1.0 - (fDistanceToWall / fDepth)) * 172;
-				}
-				switch(map.charAt(nTestY * nMapWidth + nTestX)) {
-				default:
-				case '#':
-					nTextureX = 0;//0;
-					nTextureY = 0;
-					break;
-				case ':':
-					nTextureX = 128;//1;
-					nTextureY = 0;
-					break;
-				case ';':
-					nTextureX = 256;//2;
-					nTextureY = 0;
-					break;
-				case ',':
-					nTextureX = 768;
-					nTextureY = 0;
-					break;
-				case '+':
-					nTextureX = 0;
-					nTextureY = 128;
-					break;
-				case '.':
-					nTextureX = 128;
-					nTextureY = 128;
-					break;
-				case '`':
-					nTextureX = 768;
-					nTextureY = 128;
-					break;
-				case '`':
-					nTextureX = 256;
-					nTextureY = 256;
-					break;
-				case '\\':
-					nTextureX = 768;
-					nTextureY = 256;
-					break;
-				case '@':
-					nTextureX = 0;
-					nTextureY = 384;
-					break;
-				case '[':	// not found
-					nTextureX = 256;
-					nTextureY = 384;
-					break;
-				}
-					nTextureX = 0;//0;
-					nTextureY = 0;
-				var nPitch = 512;
-				if (bBoundary)		nShade = '#000000'; // Black it out
-				
-				var drawX = nScreenWidth - x;
-				for (var y = 0; y < nScreenHeight; y++)
-				{
-					// Each Row
-					if(y <= nCeiling) {
-						//var nCeilColor = (nCeiling - y) * 2;
-						//cx.fillStyle = "rgb("+nCeilColor+","+nCeilColor+","+nCeilColor+")";
-						cx.fillStyle = '#101010';
-					} else if(y > nFloor) {
-// Shade floor based on distance
-						var b = ((y -nScreenHeight/2.0) / (nScreenHeight / 2.0));
-						var nFloorColor = (b * 0.5) * 255;
-						cx.fillStyle = "rgb("+nFloorColor*0.1+","+nFloorColor+","+nFloorColor*0.2+")";
-					}
-					else
-					{	
-						var	fSampleY = (y - nCeiling) / (nFloor - nCeiling);
-						cx.fillStyle = getTexturePixel(Math.floor(nTextureX + (fSampleX * 128.0)), Math.floor(nTextureY + (fSampleY * 128.0)), texWolfCollection);
-					}
-					//cx.fillRect(x, y, blockSizeX, blockSizeY);
-					cx.fillRect(drawX * blockSizeX, y * blockSizeY, blockSizeX, blockSizeY);
-				}
+			    var nCeiling = Math.floor(nScreenHeight / 2.0 - nScreenHeight / fDistanceToWall);
+			    var nFloor = nScreenHeight - nCeiling;
+			    for (var y = 0; y < nScreenHeight; y++) {
+					var nStartX = 0;
+					var nStartY = 0;
+			        if (y < nCeiling) {
+			            var b = ((nScreenHeight - y) / 2.0) / (nScreenHeight / 2.0);
+			            var nFloorColor = Math.floor(b * 255);
+			            cx.fillStyle = `rgb(${nFloorColor * 0.2}, ${nFloorColor * 0.3}, ${nFloorColor * 0.2})`;
+			            //cx.fillStyle = '#101010';
+			        } else if (y >= nCeiling && y < nFloor) {
+			            var fSampleY = (y - nCeiling) / (nFloor - nCeiling);
+						switch (wallChar) {
+							case '\'':
+								// Stone wall Eagle Banner
+								nStartX = 128;
+								nStartY = 0;
+								break;
+							case ',':
+								// Stone wall Green Banner
+								nStartX = 256;
+								nStartY = 0;
+								break;
+							case ':':
+								// Stone wall
+								nStartX = 0;
+								nStartY = 0;
+								break;
+							case ':':
+								// Stone wall portrait
+								nStartX = 384;
+								nStartY = 0;
+								break;
+							case '#':
+								// Wood wall
+								nStartX = 0;
+								nStartY = 128;
+								break;
+							case '+':
+								// Gray brick wall
+								nStartX = 256;
+								nStartY = 256;
+								break;
+							case '.':
+								// Red brick wall
+								nStartX = 384;
+								nStartY = 256;
+								break;
+							default:
+								// Stone wall
+								nStartX = 512;
+								nStartY = 384;
+								break;
+						}
+
+			            var pixel = getTexturePixel(
+			                nStartX + Math.floor(fSampleX * 128),
+			                nStartY + Math.floor(fSampleY * 128),
+			                texWolfCollection
+			            );
+			            cx.fillStyle = `rgb(${pixel.r}, ${pixel.g}, ${pixel.b})`;
+			        } else {
+			            var b = (y - nScreenHeight / 2.0) / (nScreenHeight / 2.0);
+			            var nFloorColor = Math.floor(b * 255);
+			            cx.fillStyle = `rgb(${nFloorColor * 0.4}, ${nFloorColor * 0.4}, ${nFloorColor * 0.4})`;
+			        }
+			        cx.fillRect(x * blockSizeX, y * blockSizeY, blockSizeX, blockSizeY);
+			    }
 			}
-				//cx.drawImage(texWolfCollection, 0, 0);
+
 			// Display Stats
-			//swprintf_s(screen, 40, L"X=%3.2f, Y=%3.2f, A=%3.2f FPS=%3.2f ", fPlayerX, fPlayerY, fPlayerA, 1.0f/fElapsedTime);
 			divStats.innerHTML = "X=" + Math.round(fPlayerX * 100) / 100 + ", Y=" + Math.round(fPlayerY * 100) / 100 + ", A=" + Math.round((fPlayerA * 57.2958) * 100) / 100 + " fps=" + Math.round((1000/delta)*100)/100;
 			
 			if(fShowMap) {
-				// Display Map
-				screen = "";
-				nPlayerX = Math.floor(fPlayerX);
-				nPlayerY = Math.floor(fPlayerY);
-				for (var ny = 0; ny < nMapHeight; ny++)
-				{
-					for (var nx = 0; nx < nMapWidth; nx++) 
-					{
-						if(nx == nPlayerX && ny == nPlayerY) {
-							screen += 'P';
-						} else if(map[ny * nMapWidth + nx] != ' ') {
-							screen += '#';//map[ny * nMapWidth + nx];
-						} else {
-							screen += '_';
-						}
-					}
-					screen += "<br />";
-				}
+			    // Display Map using fixed graphics blocks
+			    var blockSize = 5; // Reduced size of each block to 50%
+			    divMap.innerHTML = ""; // Clear previous map
+			    var mapCanvas = document.createElement("canvas");
+			    mapCanvas.width = nMapWidth * blockSize;
+			    mapCanvas.height = nMapHeight * blockSize;
+			    var mapCtx = mapCanvas.getContext("2d");
 
-				// Display Frame
-				//screen[nScreenWidth * nScreenHeight - 1] = '\0';
-				divMap.innerHTML = screen;
+			    for (var ny = 0; ny < nMapHeight; ny++) {
+			        for (var nx = 0; nx < nMapWidth; nx++) {
+			            if (nx == Math.floor(fPlayerX) && ny == Math.floor(fPlayerY)) {
+			                // Draw player as an arrow pointing in the direction of movement, rotated 90 degrees to the left
+			                mapCtx.fillStyle = "red";
+			                mapCtx.beginPath();
+			                var centerX = nx * blockSize + blockSize / 2;
+			                var centerY = ny * blockSize + blockSize / 2;
+			                var angle = fPlayerA - Math.PI / 2; // Rotate 90 degrees to the left
+			                mapCtx.moveTo(
+			                    centerX + Math.cos(angle) * blockSize / 2,
+			                    centerY + Math.sin(angle) * blockSize / 2
+			                );
+			                mapCtx.lineTo(
+			                    centerX + Math.cos(angle + Math.PI * 3 / 4) * blockSize / 3,
+			                    centerY + Math.sin(angle + Math.PI * 3 / 4) * blockSize / 3
+			                );
+			                mapCtx.lineTo(
+			                    centerX + Math.cos(angle + Math.PI) * blockSize / 4,
+			                    centerY + Math.sin(angle + Math.PI) * blockSize / 4
+			                );
+			                mapCtx.lineTo(
+			                    centerX + Math.cos(angle - Math.PI * 3 / 4) * blockSize / 3,
+			                    centerY + Math.sin(angle - Math.PI * 3 / 4) * blockSize / 3
+			                );
+			                mapCtx.closePath();
+			                mapCtx.fill();
+			            } else if (map[ny * nMapWidth + nx] != ' ') {
+			                mapCtx.fillStyle = "grey"; // Wall block
+			            } else {
+			                mapCtx.fillStyle = "white"; // Floor block
+			            }
+			            if (!(nx == Math.floor(fPlayerX) && ny == Math.floor(fPlayerY))) {
+			                mapCtx.fillRect(nx * blockSize, ny * blockSize, blockSize, blockSize);
+			            }
+			        }
+			    }
+
+			    divMap.appendChild(mapCanvas);
 			}		
 			if(fKeyLeft) {
-			    fPlayerA += (fSpeed * 5);// * fElapsedTime;
+			    fPlayerA += (fSpeed * 5);
 			    if(fPlayerA > 6.28319) {
 			        fPlayerA -= 6.28319;
 			    }
 			}
 			if(fKeyRight) {
-			    fPlayerA -= (fSpeed * 5);// * fElapsedTime;
+			    fPlayerA -= (fSpeed * 5);
 			    if(fPlayerA < 0) {
 			        fPlayerA += 6.28319;
 			    }
@@ -430,10 +384,59 @@
 	    }
 	});
 	
-	if (typeof (canvas.getContext) !== undefined) {
-		cx = canvas.getContext('2d');
+	Promise.all([
+	    loadTexture("textures/MEDIA0.png"),
+	    loadTexture("textures/PISFA0.png"),
+	    loadTexture("textures/PISGB0.png"),
+	    loadTexture("textures/SSWVA1.png"),
+	    loadTexture("textures/SSWVB1.png"),
+	    loadTexture("textures/SSWVC1.png"),
+	    loadTexture("textures/SSWVD1.png"),
+	    loadTexture("textures/SSWVE0.png"),
+	    loadTexture("textures/SSWVF0.png"),
+	    loadTexture("textures/SSWVG0.png"),
+	    loadTexture("textures/SSWVH0.png"),
+	    loadTexture("textures/SSWVI0.png"),
+	    loadTexture("textures/SSWVJ0.png"),
+	    loadTexture("textures/SSWVK0.png"),
+	    loadTexture("textures/SSWVL0.png"),
+	    loadTexture("textures/SSWVM0.png"),
+	    loadTexture("textures/WolfCollection.png")
+	]).then(([texMedia0, texPISFA0, texPISGB0, texSSWVA1, texSSWVB1, texSSWVC1, texSSWVD1, texSSWVE0, texSSWVF0, texSSWVG0, texSSWVH0, texSSWVI0, texSSWVJ0, texSSWVK0, texSSWVL0, texSSWVM0, texWolfCollection]) => {
+	    // Assign textures to variables
+	    window.texMedia0 = texMedia0;
+	    window.texPISFA0 = texPISFA0;
+	    window.texPISGB0 = texPISGB0;
+	    window.texSSWVA1 = texSSWVA1;
+	    window.texSSWVB1 = texSSWVB1;
+	    window.texSSWVC1 = texSSWVC1;
+	    window.texSSWVD1 = texSSWVD1;
+	    window.texSSWVE0 = texSSWVE0;
+	    window.texSSWVF0 = texSSWVF0;
+	    window.texSSWVG0 = texSSWVG0;
+	    window.texSSWVH0 = texSSWVH0;
+	    window.texSSWVI0 = texSSWVI0;
+	    window.texSSWVJ0 = texSSWVJ0;
+	    window.texSSWVK0 = texSSWVK0;
+	    window.texSSWVL0 = texSSWVL0;
+	    window.texSSWVM0 = texSSWVM0;
+	    window.texWolfCollection = texWolfCollection;
 
-		gameLoop();
-	}
+	    // Start the game loop after all textures are loaded
+	    if (typeof (canvas.getContext) !== undefined) {
+	        cx = canvas.getContext('2d');
+	        if (cx) {
+	            gameLoop();
+	        } else {
+	            divStats.innerHTML = "Error: Unable to initialize canvas context.";
+	        }
+	    } else {
+	        divStats.innerHTML = "Error: Canvas is not supported in this browser.";
+	    }
+	}).catch(error => {
+	    console.error("Error loading textures:", error);
+	    divStats.innerHTML = "Error: Failed to load textures.";
+	});
   </script>
 </body>
+</html>
