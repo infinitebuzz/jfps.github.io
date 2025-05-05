@@ -66,6 +66,30 @@
 	var fKeyStrafeLeft = false;
 	var fKeyStrafeRight = false;
 
+	// Add logic to handle space bar for bullet fire
+	var isBulletFired = false;
+	var bulletTimeout;
+
+	function drawBulletOverlay() {
+	    if (isBulletFired) {
+	        var overlayWidth = texPISGB0.width * 2; // Double the width
+	        var overlayHeight = texPISGB0.height * 2; // Double the height
+	        var overlayX = (nScreenWidth * blockSizeX - overlayWidth) / 2; // Center horizontally
+	        var overlayY = nScreenHeight * blockSizeY - overlayHeight; // Align to the bottom
+
+	        // Create an offscreen canvas for texPISFA0
+	        var offscreenCanvasBullet = document.createElement('canvas');
+	        offscreenCanvasBullet.width = texPISFA0.width;
+	        offscreenCanvasBullet.height = texPISFA0.height;
+	        var offscreenCtxBullet = offscreenCanvasBullet.getContext('2d');
+	        offscreenCtxBullet.putImageData(texPISFA0.texture, 0, 0);
+
+	        // Draw texPISFA0 over texPISGB0
+	        cx.globalAlpha = 1.0; // Set alpha blending
+	        cx.drawImage(offscreenCanvasBullet, overlayX, overlayY, overlayWidth, overlayHeight);
+	    }
+	}
+
 	function gameLoop() {
 		window.requestAnimationFrame(gameLoop);
 
@@ -191,7 +215,23 @@
 			        }
 			        cx.fillRect(x * blockSizeX, y * blockSizeY, blockSizeX, blockSizeY);
 			    }
-			}
+			 }
+
+			// Use drawImage for faster rendering of texPISGB0
+			var overlayWidth = texPISGB0.width * 2; // Double the width
+			var overlayHeight = texPISGB0.height * 2; // Double the height
+			var overlayX = (nScreenWidth * blockSizeX - overlayWidth) / 2; // Center horizontally
+			var overlayY = nScreenHeight * blockSizeY - overlayHeight; // Align to the bottom
+
+			// Create an offscreen canvas to handle alpha blending
+			var offscreenCanvas = document.createElement('canvas');
+			offscreenCanvas.width = texPISGB0.width;
+			offscreenCanvas.height = texPISGB0.height;
+			var offscreenCtx = offscreenCanvas.getContext('2d');
+			offscreenCtx.putImageData(texPISGB0.texture, 0, 0);
+
+			cx.globalAlpha = 1.0; // Set alpha blending
+			cx.drawImage(offscreenCanvas, overlayX, overlayY, overlayWidth, overlayHeight);
 
 			// Display Stats
 			divStats.innerHTML = "X=" + Math.round(fPlayerX * 100) / 100 + ", Y=" + Math.round(fPlayerY * 100) / 100 + ", A=" + Math.round((fPlayerA * 57.2958) * 100) / 100 + " fps=" + Math.round((1000/delta)*100)/100;
@@ -315,8 +355,17 @@
 	            // down
 	            fKeyDown = true;
 	            break;
-	        case 32:
-	            // Space - fire
+	        case 191: // Sfire bullet
+			case 190:
+	            if (!isBulletFired) {
+	                isBulletFired = true;
+	                drawBulletOverlay();
+
+	                // Remove bullet overlay after half a second
+	                bulletTimeout = setTimeout(() => {
+	                    isBulletFired = false;
+	                }, 500);
+	            }
 	            break;
 	        case 90:
 	            // Z - strafe left
